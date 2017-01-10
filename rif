@@ -260,7 +260,8 @@ echo "# Installing Base..."
 if [ "$kernel" = "linux" ]
 	then pacstrap /mnt base base-devel
 elif [ "$kernel" = "linux-lts" ]
-	then pacstrap /mnt $(pacman -Sqg base | sed 's/^\(linux\)$/\1-lts/') base-devel
+	then base=$(pacman -Sqg base | sed 's/^\(linux\)$/\1-lts/')
+	pacstrap /mnt $base base-devel
 fi
 
 #generating fstab
@@ -357,7 +358,7 @@ fi
 
 # running mkinit
 echo "# Running mkinitcpio..."
-arch_chroot "mkinitcpio -p linux"
+arch_chroot "mkinitcpio -p $kernel"
 
 # installing bootloader
 if [ "$btloader" = "yes" ]
@@ -420,6 +421,7 @@ partition
 configure
 root_password
 user_password
+kernel
 vbox
 archuserrepo
 cups
