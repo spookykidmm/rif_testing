@@ -156,7 +156,9 @@ kernel=$(zenity --list --title="$title" --height=550 --text "There are several k
 vbox() {
 graphics=$(lspci | grep -i "vga" | sed 's/.*://' | sed 's/(.*//' | sed 's/^[ \t]*//')
 if [[ $(echo $graphics | grep -i 'virtualbox') != "" ]]
-	then vbox=$(zenity --list --title="$title" --radiolist --text "The Revenge Installer has detected that you are currently running in Virtualbox.\nWould you like to install Virtualbox Utilities to the installed system?" --column Select --column Choice TRUE yes FALSE no)
+	then if [ "$kernel" = "linux" ]
+		then vbox=$(zenity --list --title="$title" --radiolist --text "The Revenge Installer has detected that you are currently running in Virtualbox.\nWould you like to install Virtualbox Utilities to the installed system?" --column Select --column Choice TRUE yes FALSE no)
+	fi
 fi
 }
 
@@ -430,8 +432,8 @@ partition
 configure
 root_password
 user_password
-vbox
 kernel
+vbox
 archuserrepo
 cups
 desktop
