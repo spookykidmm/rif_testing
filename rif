@@ -183,13 +183,9 @@ cups() {
 print=$(zenity --list --title="$title" --radiolist --text "Would you like to install printer support?" --column Select --column Choice FALSE "yes" FALSE "no")
 }
 
-kernel() {
-kernel=$(zenity --list --title="$title" --radiolist --text "Which kernel would you like to install?" --column Select --column Kernel TRUE "linux" FALSE "linux-lts")
-}
-
 desktop() {
 # Choosing Desktop
-desktop=$(zenity --list --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "mate" FALSE "mate mate-extra")
+desktop=$(zenity --list --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "mate" FALSE "mate mate-extra" FALSE "mate-gtk3" FALSE "mate-gtk3 mate-extra-gtk3")
 }
 
 # internet app list 
@@ -212,7 +208,7 @@ sed -i -e 's/[|]//g' off2.txt
 
 # utility app list
 utility_apps() {
-zenity --list --title="$title" --text "Select the Utility Applications that You Would Like to Install" --checklist --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " --height 400 > utils.txt
+zenity --list --title="$title" --text "Select the Utility Applications that You Would Like to Install" --checklist --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "gptfdisk " --height 400 > utils.txt
 sed -i -e 's/[|]//g' utils.txt
 }
 
@@ -257,12 +253,7 @@ reflector --verbose -l 50 -p http --sort rate --save /etc/pacman.d/mirrorlist
 
 #installing base
 echo "# Installing Base..."
-if [ "$kernel" = "linux" ]
-	then pacstrap /mnt base base-devel
-elif [ "$kernel" = "linux-lts" ]
-	then base=$(pacman -Sqg base | sed 's/^\(linux\)$/\1-lts/')
-	pacstrap /mnt $base base-devel
-fi
+pacstrap /mnt base base-devel
 
 #generating fstab
 echo "# Generating File System Table..."
@@ -311,7 +302,7 @@ echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
 # installing video and audio packages
 echo "# Installing Desktop, Sound, and Video Drivers..."
-pacstrap /mnt mesa xf86-video-vmware xf86-video-ark xf86-video-ati xf86-video-fbdev xf86-video-glint xf86-video-i128 xf86-video-intel xf86-video-mach64 xf86-video-neomagic xf86-video-nouveau xf86-video-nv xf86-video-openchrome xf86-video-r128 xf86-video-savage xf86-video-siliconmotion xf86-video-sis xf86-video-tdfx xf86-video-trident xorg-server xorg-server-utils xorg-xinit xorg-twm xterm alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs
+pacstrap /mnt mesa xf86-video-vesa xf86-video-voodoo xf86-video-dummy xf86-video-vmware xf86-video-ati xf86-video-fbdev xf86-video-intel xf86-video-nouveau xf86-video-openchrome xf86-video-sisusb xf86-video-amdgpu xorg-server xorg-server-utils xorg-xinit xorg-twm xterm alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs
 
 # virtualbox
 if [ "$vbox" = "yes" ]
@@ -358,7 +349,7 @@ fi
 
 # running mkinit
 echo "# Running mkinitcpio..."
-arch_chroot "mkinitcpio -p $kernel"
+arch_chroot "mkinitcpio -p linux"
 
 # installing bootloader
 if [ "$btloader" = "yes" ]
@@ -403,7 +394,7 @@ fi
 
 
 # Setting variables
-title="Revenge Intaller Framework 0.04 $SYSTEM"
+title="Revenge Intaller Framework 0.06 $SYSTEM"
 
 # Adapted from AIS. An excellent bit of code!
 arch_chroot() {
@@ -421,7 +412,6 @@ partition
 configure
 root_password
 user_password
-kernel
 vbox
 archuserrepo
 cups
