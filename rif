@@ -303,6 +303,7 @@ echo -e "Section "\"InputClass"\"\nIdentifier "\"system-keyboard"\"\nMatchIsKeyb
 
 #setting timezone
 echo "# Setting Timezone..."
+arch_chroot "rm /etc/localtime"
 arch_chroot "ln -s /usr/share/zoneinfo/${zone}/${subzone} /etc/localtime"
 
 #setting hw clock
