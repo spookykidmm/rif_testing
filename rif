@@ -94,13 +94,18 @@ auto_partition() {
 	# Find total amount of RAM
 	ram=$(grep MemTotal /proc/meminfo | awk '{print $2/1024}' | sed 's/\..*//')
 	# Find where swap partition stops
-	num=$(($ram + 513))
+	num=4000
+	
+	if [ "$ram" -gt "$num" ]
+		then swap_space=4096
+		else swap_space=$ram
+	fi
 	
 	(echo "# Creating Partitions..."
 	dd if=/dev/zero of=$dev bs=512 count=1
 	Parted "mklabel msdos"
-	Parted "mkpart primary linux-swap 1MiB ${ram}MiB"
-	Parted "mkpart primary ext4 ${ram}MiB 100%"
+	Parted "mkpart primary linux-swap 1MiB ${swap_space}MiB"
+	Parted "mkpart primary ext4 ${swap_space}MiB 100%"
 	Parted "set 2 boot on"
 	mkswap ${dev}1
 	swapon ${dev}1
@@ -189,7 +194,7 @@ print=$(zenity --list --title="$title" --radiolist --text "Would you like to ins
 
 desktop() {
 # Choosing Desktop
-desktop=$(zenity --list --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "mate" FALSE "mate mate-extra" FALSE "mate-gtk3" FALSE "mate-gtk3 mate-extra-gtk3")
+desktop=$(zenity --list --height=550 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "mate" FALSE "mate mate-extra" FALSE "mate-gtk3" FALSE "mate-gtk3 mate-extra-gtk3" FALSE "budgie-desktop" FALSE "cinnamon" FALSE "deepin" FALSE "enlightenment" FALSE "i3-wm i3lock i3status" FALSE "openbox tint2 openbox-themes")
 }
 
 # internet app list 
@@ -323,8 +328,20 @@ pacstrap /mnt mesa xf86-video-vesa xf86-video-voodoo xf86-video-dummy xf86-video
 
 # virtualbox
 if [ "$vbox" = "yes" ]
-	then pacstrap /mnt virtualbox-guest-modules-arch virtualbox-guest-utils
-        echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
+	then 
+	if [ "$kernel" = "linux" ]
+		then pacstrap /mnt virtualbox-guest-modules-arch virtualbox-guest-utils
+        	echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
+	elif [ "$kernel" = "linux-lts" ]
+		then pacstrap /mnt virtualbox-guest-dkms virtualbox-guest-utils linux-lts-headers
+		echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
+	elif [ "$kernel" = "linux-grsec" ]
+		then pacstrap /mnt virtualbox-guest-dkms virtualbox-guest-utils linux-grsec-headers
+		echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
+	elif [ "$kernel" = "linux-zen" ]
+		then pacstrap /mnt virtualbox-guest-dkms virtualbox-guest-utils linux-zen-headers
+		echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
+	fi
 fi
 
 # installing chosen desktop
