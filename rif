@@ -256,153 +256,6 @@ if [ "$?" = "1" ]
 	then exit
 fi
 
-#Giving verbose option
-ans=$(zenity --list --text "Would you like to see the process in a terminal?\nOr would you prefer to see a small dialog of the progress?" --radiolist --column choose --column option FALSE terminal FALSE progress)
-
-if [ "$ans" = "terminal" ]
-	then xfce4-terminal -e 'reflector --verbose -l 50 -p http --sort rate --save /etc/pacman.d/mirrorlist
-
-# updating pacman cache
-pacman -Syy
-arch_chroot "pacman -Syy"
-
-#installing base
-if [ "$kernel" = "linux" ]
-	then pacstrap /mnt base base-devel
-elif [ "$kernel" = "linux-lts" ]
-	then pacstrap /mnt $(pacman -Sqg base | sed 's/^\(linux\)$/\1-lts/') base-devel
-elif [ "$kernel" = "linux-grsec" ]
-	then pacstrap /mnt $(pacman -Sqg base | sed 's/^\(linux\)$/\1-grsec/') base-devel
-elif [ "$kernel" = "linux-zen" ]
-	then pacstrap /mnt $(pacman -Sqg base | sed 's/^\(linux\)$/\1-zen/') base-devel
-
-fi
-
-#generating fstab
-genfstab -p /mnt >> /mnt/etc/fstab
-
-#root password
-touch .passwd
-echo -e "$rtpasswd\n$rtpasswd2" > .passwd
-arch_chroot "passwd root" < .passwd >/dev/null
-rm .passwd
-
-#adding user
-arch_chroot "useradd -m -g users -G adm,lp,wheel,power,audio,video -s /bin/bash $username"
-touch .passwd
-echo -e "$userpasswd\n$userpasswd2" > .passwd
-arch_chroot "passwd $username" < .passwd >/dev/null
-rm .passwd
-
-#setting locale
-echo "LANG=\"${locale}\"" > /mnt/etc/locale.conf
-echo "${locale} UTF-8" > /mnt/etc/locale.gen 
-arch_chroot "locale-gen"
-export LANG=${locale}
-
-#setting keymap
-mkdir -p /mnt/etc/X11/xorg.conf.d/
-echo -e "Section "\"InputClass"\"\nIdentifier "\"system-keyboard"\"\nMatchIsKeyboard "\"on"\"\nOption "\"XkbLayout"\" "\"${keymap}"\"\nEndSection" > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
-
-#setting timezone
-arch_chroot "rm /etc/localtime"
-arch_chroot "ln -s /usr/share/zoneinfo/${zone}/${subzone} /etc/localtime"
-
-#setting hw clock
-arch_chroot "hwclock --systohc --$clock"
-
-#setting hostname
-arch_chroot "echo $hname > /etc/hostname"
-
-# setting sudo permissions
-echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
-
-# installing video and audio packages
-pacstrap /mnt mesa xf86-video-vesa xf86-video-voodoo xf86-video-dummy xf86-video-vmware xf86-video-ati xf86-video-fbdev xf86-video-intel xf86-video-nouveau xf86-video-openchrome xf86-video-sisusb xf86-video-amdgpu xorg-server xorg-server-utils xorg-xinit xorg-twm xterm alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs
-
-# virtualbox
-if [ "$vbox" = "yes" ]
-	then 
-	if [ "$kernel" = "linux" ]
-		then pacstrap /mnt virtualbox-guest-modules-arch virtualbox-guest-utils
-        	echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
-	elif [ "$kernel" = "linux-lts" ]
-		then pacstrap /mnt virtualbox-guest-dkms virtualbox-guest-utils linux-lts-headers
-		echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
-	elif [ "$kernel" = "linux-grsec" ]
-		then pacstrap /mnt virtualbox-guest-dkms virtualbox-guest-utils linux-grsec-headers
-		echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
-	elif [ "$kernel" = "linux-zen" ]
-		then pacstrap /mnt virtualbox-guest-dkms virtualbox-guest-utils linux-zen-headers
-		echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
-	fi
-fi
-
-# installing chosen desktop
-pacstrap /mnt $desktop
-
-# cups
-if [ "$print" = "yes" ]
-	then pacstrap /mnt cups ghostscript gsfonts
-fi
-
-# starting desktop manager
-if [ "$desktop" = "gnome" ]
-	then arch_chroot "systemctl enable gdm.service"
-	elif [ "$desktop" = "gnome gnome-extra" ]
-	then arch_chroot "systemctl enable gdm.service"
-	elif [ "$desktop" = "lxde" ]
-	then arch_chroot "systemctl enable lxdm.service"
-	elif [ "$desktop" = "plasma" ]
-	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
-	elif [ "$desktop" = "plasma kde-applications" ]
-	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
-	else
-	pacstrap /mnt lightdm lightdm-gtk-greeter
-	arch_chroot "systemctl enable lightdm.service"
-fi
-
-# enabling network manager
-arch_chroot "systemctl enable NetworkManager"
-
-# AUR
-if [ "$aur" = "yes" ]
-	then echo "[archlinuxfr]" >> /mnt/etc/pacman.conf
-	echo "SigLevel = Never" >> /mnt/etc/pacman.conf
-	echo "Server = http://repo.archlinux.fr/\$arch" >> /mnt/etc/pacman.conf
-	arch_chroot "pacman -Syy"
-	arch_chroot "pacman -S --noconfirm yaourt"
-
-fi
-
-# running mkinit
-arch_chroot "mkinitcpio -p $kernel"
-
-# installing bootloader
-if [ "$grub" = "yes" ]
-	pacstrap /mnt grub os-prober
-	arch_chroot "grub-install --target=i386-pc $grub_device"
-	arch_chroot "grub-mkconfig -o /boot/grub/grub.cfg"
-fi
-
-
-# installing chosen software
-# Making Variables from Applications Lists
-int=` cat int2.txt `
-med=` cat med2.txt `
-off=` cat off2.txt `
-utils=` cat utils.txt `
-
-
-# Installing Selecting Applications
-arch_chroot "pacman -Syy"
-arch_chroot "pacman -S --noconfirm $int $med $off $utils"
-
-# unmounting partitions
-umount -R /mnt
-'
-else
-
 (
 # sorting pacman mirrors
 echo "# Sorting fastest pacman mirrors..."
@@ -474,7 +327,7 @@ echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
 # installing video and audio packages
 echo "# Installing Desktop, Sound, and Video Drivers..."
-pacstrap /mnt mesa xf86-video-vesa xf86-video-voodoo xf86-video-dummy xf86-video-vmware xf86-video-ati xf86-video-fbdev xf86-video-intel xf86-video-nouveau xf86-video-openchrome xf86-video-sisusb xf86-video-amdgpu xorg-server xorg-server-utils xorg-xinit xorg-twm xterm alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs
+pacstrap /mnt mesa xf86-video-vesa xf86-video-voodoo xf86-video-dummy xf86-video-vmware xf86-video-ati xf86-video-fbdev xf86-video-intel xf86-video-nouveau xf86-video-openchrome xf86-video-sisusb xf86-video-amdgpu xorg-server xorg-server-utils xorg-xinit xorg-twm xterm alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs gvfs
 
 # virtualbox
 if [ "$vbox" = "yes" ]
@@ -514,7 +367,7 @@ if [ "$desktop" = "gnome" ]
 	elif [ "$desktop" = "plasma kde-applications" ]
 	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
 	else
-	pacstrap /mnt lightdm lightdm-gtk-greeter
+	pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter
 	arch_chroot "systemctl enable lightdm.service"
 fi
 
@@ -563,8 +416,6 @@ umount -R /mnt
 echo "# Installation Finished!"
 ) | zenity --progress --title="$title" --width=450 --pulsate --no-cancel
 
-fi
-
 }
 
 # execution
@@ -581,7 +432,7 @@ fi
 
 
 # Setting variables
-title="Revenge Intaller Framework 0.06 $SYSTEM"
+title="Revenge Intaller Framework 0.10 $SYSTEM"
 
 # Adapted from AIS. An excellent bit of code!
 arch_chroot() {
@@ -594,6 +445,10 @@ Parted() {
 }
 # Greeting the user
 zenity --question --title="$title" --text "Welcome to the Revenge Installer.\n\nNext you will be prompted with a series of questions that will\nguide you through installing Arch Linux.\nYou will be asked if you want to use manual or auto partitioning.\nIf you select auto partitioning the drive that you select will be completely deleted\nand Arch will be installed. If you select manual, you will have the opportunity to partition the disk yourself\nand select which partitons to use for installation.\nClick 'yes' to begin or 'no' to exit." --height=50
+
+if [ "$?" = "1" ]
+	then exit
+fi
 
 partition
 configure
