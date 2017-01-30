@@ -101,8 +101,7 @@ auto_partition() {
 		else swap_space=$ram
 	fi
 	
-	boot=513
-	uefi_swap=$(($swap_space + $boot))
+	uefi_swap=$(($swap_space + 513))
 
 
 	#BIOS or UEFI
@@ -119,20 +118,20 @@ auto_partition() {
 	        mkfs.ext4 -F ${dev}2
 	        mount ${dev}2 /mnt) | zenity --progress --title="$title" --width=450 --pulsate --auto-close --no-cancel
 	    else
-            (echo "# Creating Partitions for UEFI..."
-            dd if=/dev/zero of=$dev bs=512 count=1
-            Parted "mklabel gpt"
-            Parted "mkpart primary ESP fat32 1MiB 513MiB"
-			Parted "mkpart primary linux-swap 513MiB ${uefi_swap}MiB"
-			Parted "mkpart primary ext4 ${uefi_swap}MiB 100%"
-			Parted "set 1 boot on"
-			mkfs.fat -F32 ${dev}1
-			mkfs.ext4 -F ${dev}3
-			mkswap ${dev}2
-			swapon ${dev}2
-			mount ${dev}3 /mnt
-			mkdir -p /mnt/boot
-			mount ${dev}1 /mnt/boot) | zenity --progress --title="$title" --width=450 --pulsate --auto-close --no-cancel
+            	(echo "# Creating Partitions for UEFI..."
+            	dd if=/dev/zero of=$dev bs=512 count=1
+            	Parted "mklabel gpt"
+            	Parted "mkpart primary fat32 1MiB 513MiB"
+		Parted "mkpart primary linux-swap 513MiB ${uefi_swap}MiB"
+		Parted "mkpart primary ext4 ${uefi_swap}MiB 100%"
+		Parted "set 1 boot on"
+		mkfs.fat -F32 ${dev}1
+		mkfs.ext4 -F ${dev}3
+		mkswap ${dev}2
+		swapon ${dev}2
+		mount ${dev}3 /mnt
+		mkdir -p /mnt/boot
+		mount ${dev}1 /mnt/boot) | zenity --progress --title="$title" --width=450 --pulsate --auto-close --no-cancel
 	fi
 			
 }
