@@ -420,10 +420,8 @@ if [ "$grub" = "yes" ]
 	else
 		echo "# Installing Bootloader..."
 		pacstrap /mnt grub os-prober efibootmgr
-		arch_chroot "grub-install --target=x86_64-efi --efi-directory=/mnt/boot --bootloader-id=arch_grub"
+		arch_chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=boot"
 		arch_chroot "grub-mkconfig -o /boot/grub/grub.cfg"
-		arch_chroot "mkdir /mnt/boot/EFI/boot"
-		arch_chroot "cp -r /mnt/boot/EFI/arch_grub/grubx64.efi /mnt/boot/EFI/boot/bootx64.efi"
 		fi
 fi
 
