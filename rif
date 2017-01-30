@@ -328,8 +328,7 @@ arch_chroot "locale-gen"
 export LANG=${locale}
 
 #setting keymap
-mkdir -p /mnt/etc/X11/xorg.conf.d/
-echo -e "Section "\"InputClass"\"\nIdentifier "\"system-keyboard"\"\nMatchIsKeyboard "\"on"\"\nOption "\"XkbLayout"\" "\"${keymap}"\"\nEndSection" > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
+arch_chroot "localectl set-keymap $keymap"
 
 #setting timezone
 echo "# Setting Timezone..."
