@@ -414,6 +414,8 @@ if [ "$grub" = "yes" ]
 		arch_chroot "grub-mkconfig -o /boot/grub/grub.cfg"
 	else
 		echo "# Installing Bootloader..."
+		
+		[[ -z $(mount | grep /sys/firmware/efi/efivars) ]] && mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 
 
 		if [ "$ans" = "Automatic Partitioning" ]
