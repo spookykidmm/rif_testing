@@ -328,7 +328,8 @@ arch_chroot "locale-gen"
 export LANG=${locale}
 
 #setting keymap
-arch_chroot "localectl set-keymap $keymap"
+echo "KEYMAP=${keymap}" >> /mnt/etc/vconsole.conf
+echo -e "Section "\"InputClass"\"\nIdentifier "\"system-keyboard"\"\nMatchIsKeyboard "\"on"\"\nOption "\"XkbLayout"\" "\"${keymap}"\"\nEndSection" > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
 
 #setting timezone
 echo "# Setting Timezone..."
@@ -418,18 +419,21 @@ if [ "$grub" = "yes" ]
 		arch_chroot "grub-mkconfig -o /boot/grub/grub.cfg"
 	else
 		echo "# Installing Bootloader..."
-		
+		#making sure efivars is mounted
 		[[ -z $(mount | grep /sys/firmware/efi/efivars) ]] && mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 
-
+        #defining root partition
 		if [ "$ans" = "Automatic Partitioning" ]
 			then root_part="${dev}3"
 		fi
 
 		[[ $(echo $root_part | grep "/dev/mapper/") != "" ]] && bl_root=$root_part \
 		|| bl_root=$"PARTUUID="$(blkid -s PARTUUID ${root_part} | sed 's/.*=//g' | sed 's/"//g')
-
+        
+        #installing systemd-boot
 		arch_chroot "bootctl --path=/boot install"
+		
+		#creating systemd-boot config files
 		echo -e "default  Arch\ntimeout  10" > /mnt/boot/loader/loader.conf
 		[[ -e /mnt/boot/initramfs-linux.img ]] && echo -e "title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/initramfs-linux.img\noptions\troot=${bl_root} rw" > /mnt/boot/loader/entries/Arch.conf
 		[[ -e /mnt/boot/initramfs-linux-lts.img ]] && echo -e "title\tArchLinux LTS\nlinux\t/vmlinuz-linux-lts\ninitrd\t/initramfs-linux-lts.img\noptions\troot=${bl_root} rw" > /mnt/boot/loader/entries/Arch-lts.conf
@@ -438,18 +442,20 @@ if [ "$grub" = "yes" ]
 		fi
 fi
 
-# installing chosen software
-echo "# Installing chosen software packages..."
+
 # Making Variables from Applications Lists
 int=` cat int2.txt `
 med=` cat med2.txt `
 off=` cat off2.txt `
 utils=` cat utils.txt `
 
-
-# Installing Selecting Applications
-arch_chroot "pacman -Syy"
-arch_chroot "pacman -S --noconfirm $int $med $off $utils"
+if [[ $(echo $int $med $off $utils) != "" ]]
+    then
+    # Installing Selected Applications
+    echo "# Installing chosen software packages..."
+    arch_chroot "pacman -Syy"
+    arch_chroot "pacman -S --noconfirm $int $med $off $utils"
+fi
 
 # unmounting partitions
 umount -R /mnt
