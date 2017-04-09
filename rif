@@ -27,7 +27,7 @@ dev=$(zenity --list --title="$title" --radiolist --text "Select the drive that y
 
 # Partitioning
 # Allow user to partition using gparted
-zenity --question --title="$title" --height=40 --text "Do you need to partition $dev?\nSelect 'yes' to open gparted and partition\nthe disk or format partitions if needed.\nThe installer will not format the partitions after this,\nso if your partitions need to be formatted please select yes\nand use gparted to format them now.\nThe installer supports using a seperate /boot /home /root and swap partitions."
+zenity --question --title="$title" --height=40 --text "Do you need to partition $dev?\nSelect 'yes' to open gparted and partition\nthe disk or format partitions if needed.\nThe installer will not format the partitions after this,\nso if your partitions need to be formatted please select yes\nand use gparted to format them now.\nThe installer supports using a seperate /boot /home and /root partition, as well as a swap partition or file."
 if [ "$?" = "0" ]
 	then gparted
 fi
@@ -47,6 +47,15 @@ fi
 	--radiolist --multiple --column ' ' --column 'Partitions')
 		mkswap $swap_part
 		swapon $swap_part
+		fi
+	zenity --question --title="$title" --text "Would you like to create a 1GB swapfile on root? (If you've already mounted a swap partition or don't want swap, select \"No\".)" --height=40
+		if [ "$?" = "0" ]
+	 	then swapfile="yes"
+		touch /mnt/swapfile
+		dd if=/dev/zero of=/mnt/swapfile bs=1M count=1024
+		chmod 600 /mnt/swapfile
+		mkswap /mnt/swapfile
+		swapon /mnt/swapfile
 		fi
 
 	# Boot Partition?
@@ -69,7 +78,7 @@ fi
 		--radiolist --multiple --column ' ' --column 'Partitions')
 		# mounting home partition
 		mkdir -p /mnt/home
-		mount $root_part /mnt/home
+		mount $home_part /mnt/home
 		fi
 }
 
@@ -110,28 +119,34 @@ auto_partition() {
 	       (echo "# Creating Partitions for BIOS..."
 	        dd if=/dev/zero of=$dev bs=512 count=1
 	        Parted "mklabel msdos"
-	        Parted "mkpart primary linux-swap 1MiB ${swap_space}MiB"
-	        Parted "mkpart primary ext4 ${swap_space}MiB 100%"
-	        Parted "set 2 boot on"
-	        mkswap ${dev}1
-	        swapon ${dev}1
-	        mkfs.ext4 -F ${dev}2
-	        mount ${dev}2 /mnt) | zenity --progress --title="$title" --width=450 --pulsate --auto-close --no-cancel
+	        Parted "mkpart primary ext4 1MiB 100%"
+	        Parted "set 1 boot on"
+	        mkfs.ext4 -F ${dev}1
+	        mount ${dev}1 /mnt
+		touch /mnt/swapfile
+		dd if=/dev/zero of=/mnt/swapfile bs=1M count=${swap_space}
+		chmod 600 /mnt/swapfile
+		mkswap /mnt/swapfile
+		swapon /mnt/swapfile
+		swapfile="yes") | zenity --progress --title="$title" --width=450 --pulsate --auto-close --no-cancel
 	    else
             	(echo "# Creating Partitions for UEFI..."
             	dd if=/dev/zero of=$dev bs=512 count=1
             	Parted "mklabel gpt"
             	Parted "mkpart primary fat32 1MiB 513MiB"
-		Parted "mkpart primary linux-swap 513MiB ${uefi_swap}MiB"
-		Parted "mkpart primary ext4 ${uefi_swap}MiB 100%"
+		Parted "mkpart primary ext4 513MiB 100%"
 		Parted "set 1 boot on"
 		mkfs.fat -F32 ${dev}1
-		mkfs.ext4 -F ${dev}3
-		mkswap ${dev}2
-		swapon ${dev}2
-		mount ${dev}3 /mnt
+		mkfs.ext4 -F ${dev}2
+		mount ${dev}2 /mnt
 		mkdir -p /mnt/boot
-		mount ${dev}1 /mnt/boot) | zenity --progress --title="$title" --width=450 --pulsate --auto-close --no-cancel
+		mount ${dev}1 /mnt/boot
+		touch /mnt/swapfile
+		dd if=/dev/zero of=/mnt/swapfile bs=1M count=${swap_space}
+		chmod 600 /mnt/swapfile
+		mkswap /mnt/swapfile
+		swapon /mnt/swapfile
+		swapfile="yes") | zenity --progress --title="$title" --width=450 --pulsate --auto-close --no-cancel
 	fi
 			
 }
@@ -183,6 +198,18 @@ if [[ $(echo $graphics | grep -i 'virtualbox') != "" ]]
 fi
 }
 
+nvidia() {
+graphics=$(lspci | grep -i "vga" | sed 's/.*://' | sed 's/(.*//' | sed 's/^[ \t]*//')
+card=$(lspci -k | grep -A 2 -E "(VGA|3D)")
+if [[ $(echo $graphics | grep -i 'nvidia') != "" ]]
+	then nvidia=$(zenity --list --title="$title" --radiolist --text "The Revenge Installer has detected that you are currently running an Nvidia graphics card.\nWould you like to install Proprietary Nvidia graphics drivers to the installed system?" --column Select --column Choice FALSE yes FALSE no)
+		if [ "nvidia" = "yes" ]
+			then video=$(zenity --list --height=400 --title="$title" --text "You will need to know what model of NVIDIA gaphics card you are using.\nFor NVIDIA 400 series and newer install nvidia and nvidia-libgl.\nFor 8000-9000 or 100-300 series install nvidia-304xx and nvidia-304xx-libgl.\n\nYour current graphics card is:\n$card\n\nSelect the NVIDIA drivers that you would like to install." --checklist --column "Select" --column "Driver" FALSE "nvidia nvidia-libgl nvidia-settings" FALSE "nvidia-304xx nvidia-304xx-libgl nvidia-settings")
+			else video="mesa xf86-video-nouveau"
+		fi
+fi
+}
+
 kernel() {
 kernel=$(zenity --list --title="$title" --height=550 --text "There are several kernels available for the system.\n\nThe most common is the current linux kernel.\nThis kernel is the most up to date, providing the best hardware support.\nHowever, there could be possible bugs in this kernel, despite testing.\n\nThe linux-lts kernel provides a focus on stability.\nIt is based on an older kernel, so it may lack some newer features.\n\nThe linux-grsec kernel is focused on security\nIt contains the Grsecurity Patchset and PaX for increased security.\n\nThe linux-zen kernel is the result of a collaboration of kernel hackers\nto provide the best possible kernel for everyday systems.\n\nPlease select the kernel that you would like to install." --radiolist --column "Select" --column "Kernel" FALSE linux FALSE linux-lts FALSE linux-grsec FALSE linux-zen)
 }
@@ -216,7 +243,7 @@ print=$(zenity --list --title="$title" --radiolist --text "Would you like to ins
 
 desktop() {
 # Choosing Desktop
-desktop=$(zenity --list --height=550 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "mate" FALSE "mate mate-extra" FALSE "mate-gtk3" FALSE "mate-gtk3 mate-extra-gtk3" FALSE "budgie-desktop" FALSE "cinnamon" FALSE "deepin" FALSE "enlightenment" FALSE "i3-wm i3lock i3status" FALSE "openbox tint2 openbox-themes")
+desktop=$(zenity --list --height=550 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "mate" FALSE "mate mate-extra" FALSE "budgie-desktop" FALSE "cinnamon" FALSE "deepin" FALSE "enlightenment" FALSE "i3-wm i3lock i3status" FALSE "openbox tint2 openbox-themes")
 }
 
 # internet app list
@@ -304,6 +331,9 @@ fi
 #generating fstab
 echo "# Generating File System Table..."
 genfstab -p /mnt >> /mnt/etc/fstab
+if ["$swapfile" = "yes"]
+then echo "/swapfile none swap sw 0 0" >> /mnt/etc/fstab
+fi
 
 #root password
 echo "# Setting root password..."
@@ -328,8 +358,7 @@ arch_chroot "locale-gen"
 export LANG=${locale}
 
 #setting keymap
-echo "KEYMAP=${keymap}" >> /mnt/etc/vconsole.conf
-echo -e "Section "\"InputClass"\"\nIdentifier "\"system-keyboard"\"\nMatchIsKeyboard "\"on"\"\nOption "\"XkbLayout"\" "\"${keymap}"\"\nEndSection" > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
+arch_chroot "localectl set-keymap $keymap"
 
 #setting timezone
 echo "# Setting Timezone..."
@@ -349,7 +378,7 @@ echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
 # installing video and audio packages
 echo "# Installing Desktop, Sound, and Video Drivers..."
-pacstrap /mnt mesa xf86-video-vesa xf86-video-voodoo xf86-video-dummy xf86-video-vmware xf86-video-ati xf86-video-fbdev xf86-video-intel xf86-video-nouveau xf86-video-openchrome xf86-video-sisusb xf86-video-amdgpu xorg-server xorg-server-utils xorg-xinit xorg-twm xterm alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs gvfs
+pacstrap /mnt  $video xf86-video-vesa xf86-video-voodoo xf86-video-dummy xf86-video-vmware xf86-video-ati xf86-video-fbdev xf86-video-intel xf86-video-openchrome xf86-video-sisusb xf86-video-amdgpu xorg-server xorg-server-utils xorg-xinit xorg-twm xterm alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs gvfs
 
 # virtualbox
 if [ "$vbox" = "yes" ]
@@ -406,10 +435,6 @@ if [ "$aur" = "yes" ]
 
 fi
 
-# running mkinit
-echo "# Running mkinitcpio..."
-arch_chroot "mkinitcpio -p $kernel"
-
 # installing bootloader
 if [ "$grub" = "yes" ]
 	then if [ "$SYSTEM" = 'BIOS' ]
@@ -419,21 +444,16 @@ if [ "$grub" = "yes" ]
 		arch_chroot "grub-mkconfig -o /boot/grub/grub.cfg"
 	else
 		echo "# Installing Bootloader..."
-		#making sure efivars is mounted
-		[[ -z $(mount | grep /sys/firmware/efi/efivars) ]] && mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 
-        #defining root partition
+
 		if [ "$ans" = "Automatic Partitioning" ]
-			then root_part="${dev}3"
+			then root_part=${dev}3
 		fi
 
 		[[ $(echo $root_part | grep "/dev/mapper/") != "" ]] && bl_root=$root_part \
 		|| bl_root=$"PARTUUID="$(blkid -s PARTUUID ${root_part} | sed 's/.*=//g' | sed 's/"//g')
-        
-        #installing systemd-boot
-		arch_chroot "bootctl --path=/boot install"
-		
-		#creating systemd-boot config files
+
+		bootctl --path=/boot install
 		echo -e "default  Arch\ntimeout  10" > /mnt/boot/loader/loader.conf
 		[[ -e /mnt/boot/initramfs-linux.img ]] && echo -e "title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/initramfs-linux.img\noptions\troot=${bl_root} rw" > /mnt/boot/loader/entries/Arch.conf
 		[[ -e /mnt/boot/initramfs-linux-lts.img ]] && echo -e "title\tArchLinux LTS\nlinux\t/vmlinuz-linux-lts\ninitrd\t/initramfs-linux-lts.img\noptions\troot=${bl_root} rw" > /mnt/boot/loader/entries/Arch-lts.conf
@@ -442,20 +462,23 @@ if [ "$grub" = "yes" ]
 		fi
 fi
 
+# running mkinit
+echo "# Running mkinitcpio..."
+arch_chroot "mkinitcpio -p $kernel"
 
+
+# installing chosen software
+echo "# Installing chosen software packages..."
 # Making Variables from Applications Lists
 int=` cat int2.txt `
 med=` cat med2.txt `
 off=` cat off2.txt `
 utils=` cat utils.txt `
 
-if [[ $(echo $int $med $off $utils) != "" ]]
-    then
-    # Installing Selected Applications
-    echo "# Installing chosen software packages..."
-    arch_chroot "pacman -Syy"
-    arch_chroot "pacman -S --noconfirm $int $med $off $utils"
-fi
+
+# Installing Selecting Applications
+arch_chroot "pacman -Syy"
+arch_chroot "pacman -S --noconfirm $int $med $off $utils"
 
 # unmounting partitions
 umount -R /mnt
@@ -475,7 +498,7 @@ fi
 
 
 # Setting variables
-title="Revenge Intaller Framework 0.10 $SYSTEM"
+title="Revenge Intaller Framework 0.80 $SYSTEM"
 
 # Adapted from AIS. An excellent bit of code!
 arch_chroot() {
@@ -499,6 +522,7 @@ root_password
 user_password
 kernel
 vbox
+nvidia
 archuserrepo
 cups
 desktop
