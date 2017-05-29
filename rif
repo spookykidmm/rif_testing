@@ -443,11 +443,7 @@ arch_chroot "systemctl enable NetworkManager"
 
 # adding revenge_repo
 if [ "$repo" = "yes"  ]
-then arch_chroot "echo "[revenge_repo]" >> /etc/pacman.conf
-echo "SigLevel = Optional TrustAll" >> /etc/pacman.conf
-echo "Server = https://raw.github.com/obrevenge/revenge_repo/master/$arch" >> /etc/pacman.conf
-echo "Server = https://downloads.sourceforge.net/project/revenge-repo/revenge_repo/$arch" >> /etc/pacman.conf
-echo "Server = ftp://ftp.heanet.ie/mirrors/sourceforge/r/re/revenge-repo/revenge_repo/$arch" >> /etc/pacman.conf"
+then arch_chroot "echo "[revenge_repo]/nSigLevel = Optional TrustAll/nServer = https://raw.github.com/obrevenge/revenge_repo/master/$arch/nServer = https://downloads.sourceforge.net/project/revenge-repo/revenge_repo/$arch/nServer = ftp://ftp.heanet.ie/mirrors/sourceforge/r/re/revenge-repo/revenge_repo/$arch" >> /etc/pacman.conf"
 arch_chroot "sudo pacman -Syyu"
 fi
 
@@ -466,8 +462,8 @@ fi
 
 #selecting shell
 if [ "$shell" = "zsh" ]
-then arch_chroot "sudo pacman -S --noconfirm zsh zsh-syntax-highlighting zsh-completions grml-zsh-config;chsh -s /bin/zsh"
-else arch_chroot "sudo pacman -S --noconfirm $shell;chsh -s /bin/$shell"
+then arch_chroot "sudo pacman -S --noconfirm zsh zsh-syntax-highlighting zsh-completions grml-zsh-config | chsh -s /bin/zsh"
+else arch_chroot "sudo pacman -S --noconfirm $shell | chsh -s /bin/$shell"
 fi
 
 # installing bootloader
