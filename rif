@@ -444,7 +444,7 @@ arch_chroot "systemctl enable NetworkManager"
 # adding revenge_repo
 if [ "$repo" = "yes"  ]
 then arch_chroot "echo "[revenge_repo]/nSigLevel = Optional TrustAll/nServer = https://raw.github.com/obrevenge/revenge_repo/master/$arch/nServer = https://downloads.sourceforge.net/project/revenge-repo/revenge_repo/$arch/nServer = ftp://ftp.heanet.ie/mirrors/sourceforge/r/re/revenge-repo/revenge_repo/$arch" >> /etc/pacman.conf"
-arch_chroot "sudo pacman -Syyu"
+arch_chroot "sudo pacman -Syy"
 fi
 
 # installing pamac-aur
