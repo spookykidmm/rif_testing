@@ -236,7 +236,7 @@ rtpasswd2=$(zenity --entry --title="$title" --text "Please re-enter your root pa
 		root_password
 	fi
 }
-shell() {
+changeshell() {
 shell=$(zenity --list --title="$title" --radiolist --text "What shell would you like to use?" --column Select --column Choice FALSE bash FALSE zsh FALSE fish)
 }
 
@@ -442,7 +442,7 @@ fi
 arch_chroot "systemctl enable NetworkManager"
 
 # adding revenge_repo
-if [ "$revenge_repo" = "yes"  ]
+if [ "$repo" = "yes"  ]
 then arch_chroot "echo "[revenge_repo]" >> /etc/pacman.conf
 echo "SigLevel = Optional TrustAll" >> /etc/pacman.conf
 echo "Server = https://raw.github.com/obrevenge/revenge_repo/master/$arch" >> /etc/pacman.conf
@@ -561,7 +561,7 @@ vbox
 revengerepo
 pamacaur
 archuserrepo
-shell
+changeshell
 cups
 desktop
 installapps
