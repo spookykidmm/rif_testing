@@ -443,7 +443,7 @@ arch_chroot "systemctl enable NetworkManager"
 
 # adding revenge_repo
 if [ "$repo" = "yes"  ]
-then arch_chroot "echo "[revenge_repo]" >> /etc/pacman.conf;echo "SigLevel = Optional TrustAll" >> /etc/pacman.conf;echo "Server = https://raw.github.com/obrevenge/revenge_repo/master/$arch" >> /etc/pacman.conf;echo "Server = https://downloads.sourceforge.net/project/revenge-repo/revenge_repo/$arch" >> /etc/pacman.conf;echo "Server = ftp://ftp.heanet.ie/mirrors/sourceforge/r/re/revenge-repo/revenge_repo/$arch" >> /etc/pacman.conf"
+then echo "[revenge_repo]" >> /mnt/etc/pacman.conf;echo "SigLevel = Optional TrustAll" >> /mnt/etc/pacman.conf;echo "Server = https://raw.github.com/obrevenge/revenge_repo/master/$arch" >> /mnt/etc/pacman.conf;echo "Server = https://downloads.sourceforge.net/project/revenge-repo/revenge_repo/$arch" >> /mnt/etc/pacman.conf;echo "Server = ftp://ftp.heanet.ie/mirrors/sourceforge/r/re/revenge-repo/revenge_repo/$arch" >> /mnt/etc/pacman.conf
 arch_chroot "sudo pacman -Syy"
 fi
 
