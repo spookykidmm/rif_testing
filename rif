@@ -359,13 +359,6 @@ sed -i '/swapfile/d' /mnt/etc/fstab
 echo "/swapfile		none	swap	defaults	0	0" >> /mnt/etc/fstab
 fi
 
-#installing shell
-echo "# Installing Shell...:
-if [ "$shell" = "zsh" ]
-then pacstrap /mnt zsh grml-zsh-config
-else pacstrap /mnt $shell
-fi
-
 #root password
 echo "# Setting root password..."
 touch .passwd
