@@ -359,6 +359,13 @@ sed -i '/swapfile/d' /mnt/etc/fstab
 echo "/swapfile		none	swap	defaults	0	0" >> /mnt/etc/fstab
 fi
 
+#installing shell
+echo "# Installing Shell...:
+if [ "$shell" = "zsh" ]
+then pacstrap /mnt zsh grml-zsh-config
+else pacstrap /mnt $shell
+fi
+
 #root password
 echo "# Setting root password..."
 touch .passwd
@@ -368,7 +375,7 @@ rm .passwd
 
 #adding user
 echo "# Making new user..."
-arch_chroot "useradd -m -g users -G adm,lp,wheel,power,audio,video -s /bin/bash $username"
+arch_chroot "useradd -m -g users -G adm,lp,wheel,power,audio,video -s /bin/$shell $username"
 touch .passwd
 echo -e "$userpasswd\n$userpasswd2" > .passwd
 arch_chroot "passwd $username" < .passwd >/dev/null
