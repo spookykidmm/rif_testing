@@ -368,7 +368,7 @@ rm .passwd
 
 #adding user
 echo "# Making new user..."
-arch_chroot "useradd -m -g users -G adm,lp,wheel,power,audio,video -s /bin/$shell $username"
+arch_chroot "useradd -m -g users -G adm,lp,wheel,power,audio,video -s /bin/bash $username"
 touch .passwd
 echo -e "$userpasswd\n$userpasswd2" > .passwd
 arch_chroot "passwd $username" < .passwd >/dev/null
@@ -476,7 +476,7 @@ fi
 
 #selecting shell
 if [ "$shell" = "zsh" ]
-then arch_chroot "sudo pacman -S --noconfirm zsh zsh-syntax-highlighting zsh-completions grml-zsh-config;chsh -s /usr/bin/zsh"
+then arch_chroot "sudo pacman -S --noconfirm zsh zsh-syntax-highlighting zsh-completions grml-zsh-config;chsh -s /usr/bin/zsh $username"
 else arch_chroot "sudo pacman -S --noconfirm $shell;chsh -s /usr/bin/$shell"
 fi
 
