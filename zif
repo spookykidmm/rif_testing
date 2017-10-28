@@ -1,9 +1,11 @@
-﻿#!/bin/sh
+#!/bin/sh
 
-# Zen Installer Framework version 0.10
+# Zen Installer Framework version 1.00
 #
 # Written by Jody James
 #
+#
+#Maintained by Josiah Ward(aka spookykidmm)
 #
 # This program is free software, provided under the GNU General Public License
 # as published by the Free Software Foundation. So feel free to copy, distribute,
@@ -14,7 +16,6 @@
 #
 #
 # Selecting the Drive
-cp keyz.txt /
 man_partition() {
 list=` lsblk -lno NAME,TYPE,SIZE,MOUNTPOINT | grep "disk" `
 
@@ -34,9 +35,7 @@ if [ "$?" = "0" ]
 fi
 
 	# Select root partition
-	root_part=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][0-9]"  | sort | awk '{ printf "FALSE""\0"$0"\0" }' | \
-	xargs -0 zenity --list --title="$title" --text="Choose a partition to use for the root partition\nWarning, this list shows all available partitions on all available drives.\nPlease choose with care." \
-	--radiolist --multiple --column ' ' --column 'Partitions')
+	root_part=$(zenity --list --title="$title" --text="Choose a partition to use for the root partition\nWarning, this list shows all available partitions on all available drives.\nPlease choose with care." --radiolist --column ' ' --column Partitions $(sudo fdisk -l | grep dev | grep -v Disk | awk '{print $1}' | awk '{ printf " FALSE ""\0"$0"\0" }'))
 	#mounting root partition
 touch root_part.txt    
 echo $root_part >> root_part.txt
@@ -45,9 +44,7 @@ echo $root_part >> root_part.txt
 	# Swap partition?
 	zenity --question --title="$title" --text "Do you want to use a swap partition?" --height=40
 		if [ "$?" = "0" ]
-		then swap_part=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][0-9]"  | sort | awk '{ printf "FALSE""\0"$0"\0" }' | \
-	xargs -0 zenity --list --title="$title" --text="Choose a partition to use for the swap partition\nWarning, this list shows all available partitions on all available drives.\nPlease choose with care." \
-	--radiolist --multiple --column ' ' --column 'Partitions')
+		then swap_part=$(zenity --list --title="$title" --text="Choose a partition to use for the swap partition\nWarning, this list shows all available partitions on all available drives.\nPlease choose with care." --radiolist --column ' ' --column 'Partitions' $(sudo fdisk -l | grep dev | grep -v Disk | awk '{print $1}' | awk '{ printf " FALSE ""\0"$0"\0" }'))
 		mkswap $swap_part
 		swapon $swap_part
 		fi
@@ -65,9 +62,7 @@ echo $root_part >> root_part.txt
 	# Boot Partition?
 	zenity --question --title="$title" --text "Do you want to use a seperate boot partition?" --height=40
 		if [ "$?" = "0" ]
-		then boot_part=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][0-9]"  | sort | awk '{ printf "FALSE""\0"$0"\0" }' | \
-		xargs -0 zenity --list --title="$title" --text="Choose a partition to use for the boot partition\nWarning, this list shows all available partitions on all available drives.\nPlease choose with care." \
---radiolist --multiple --column ' ' --column 'Partitions')
+		then boot_part=$(zenity --list --radiolist --title="$title" --text="Please select a partition for /boot. This list shows all available drives on your system, so choose with care." --column ' ' --column Partitions $(sudo fdisk -l | grep dev | grep -v Disk | awk '{print $1}' | awk '{ printf " FALSE ""\0"$0"\0" }'))
 
 		mkdir -p /mnt/boot
 		mount $boot_part /mnt/boot
@@ -77,9 +72,7 @@ echo $root_part >> root_part.txt
 	# Home Partition?
 	zenity --question --title="$title" --text "Do you want to use a seperate home partition?" --height=40
 		if [ "$?" = "0" ]
-		then home_part=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][0-9]"  | sort | awk '{ printf "FALSE""\0"$0"\0" }' | \
-		xargs -0 zenity --list --title="$title" --text="Choose a partition to use for the home partition\nWarning, this list shows all available partitions on all available drives.\nPlease choose with care." \
-		--radiolist --multiple --column ' ' --column 'Partitions')
+		then home_part=$(zenity --list --radiolist --title="$title" --text="Select your home partition" --column ' ' --column Partitions $(sudo fdisk -l | grep dev | grep -v Disk | awk '{print $1}' | awk '{ printf " FALSE ""\0"$0"\0" }'))
 		# mounting home partition
 		mkdir -p /mnt/home
 		mount $home_part /mnt/home
@@ -97,15 +90,15 @@ auto_partition() {
 
 	dev=$(zenity --list --title="$title" --radiolist --text "Select the drive that you want to use for installation." --column Drive --column Info $devices)
 
-	yn=$(zenity --question --title="$title" --text "Warning! This will erase all data on $dev\!\nAre you sure you want to continue?\nSelect 'Yes' to continue and 'No' to go back.") 
+	zenity --question --title="$title" --height=40 --text "Warning! This will erase all data on $dev\!\nAre you sure you want to continue?\nSelect 'Yes' to continue and 'No' to go back."
+        yn="$?"
         touch root_part.txt
         if [ "$SYSTEM" = "BIOS" ]
 	then echo {$dev}1 >> root_part.txt
 	else echo {$dev}2 >> root_part.txt
         fi 
-	if [ "$?" = "1" ]
+	if [ "$yn" = "1" ]
 	then partition
-
 	fi
 
 	# Find total amount of RAM
@@ -176,23 +169,28 @@ locales=$(cat /etc/locale.gen | grep -v "#  " | sed 's/#//g' | sed 's/ UTF-8//g'
 
 locale=$(zenity --list --title="$title" --radiolist --text "Select your locale/language.\nThe default is American English 'en_US.UTF-8'." --column Select --column Locale TRUE en_US.UTF-8 $locales --height=350 --width=300)
 
-keyz=$(zenity --question --title="$title" --text="Would you like to change your keyboard model? The default is pc105")
+zenity --question --title="$title" --height=40 --text="Would you like to change your keyboard model? The default is pc105"
 mod="$?"
+
 if [ "$mod" = "0" ]
 then model=$(zenity --list --title="$title" --radiolist --text="Select your keyboard model" --column Select --column Model $(localectl list-x11-keymap-models | awk '{ printf " FALSE ""\0"$0"\0" }'))
 fi
 
 layout=$(zenity --list --title="$title" --radiolist --text="Select your layout, a two-character country code" --column Select --column Layout $(localectl list-x11-keymap-layouts | awk '{ printf " FALSE ""\0"$0"\0" }'))
 
-var=$(zenity --question --title="$title" --text="Would you like to change your keyboard variant?")
+zenity --question --title="$title" --height=40 --text="Would you like to change your keyboard variant?"
 vary="$?"
+
 if [ "$vary" = "0" ]
 then variant=$(zenity --list --title="$title" --radiolist --text="Select your preferred variant" --column Select --column Variant $(localectl list-x11-keymap-variants | awk '{ printf " FALSE ""\0"$0"\0" }'))
 fi
+
 setxkbmap $layout
+
 if [ "$model" = "0" ] 
 then setxkbmap -model $model 
 fi
+
 if [ "$vary" = "0" ] 
 then setxkbmap -variant $variant
 fi
@@ -217,18 +215,18 @@ username=$(zenity --entry --title="$title" --text "Please enter a username for t
 vbox() {
 graphics=$(lspci | grep -i "vga" | sed 's/.*://' | sed 's/(.*//' | sed 's/^[ \t]*//')
 if [[ $(echo $graphics | grep -i 'virtualbox') != "" ]]
-	then vbox=$(zenity --question --title="$title" --text "The Revenge Installer has detected that you are currently running in Virtualbox.\nWould you like to install Virtualbox Utilities to the installed system?")
-fi
+	then zenity --question --title="$title" --height=40 --text "The Revenge Installer has detected that you are currently running in Virtualbox.\nWould you like to install Virtualbox Utilities to the installed system?"
 vb="$?"
+fi
 }
 
 nvidia() {
 graphics=$(lspci | grep -i "vga" | sed 's/.*://' | sed 's/(.*//' | sed 's/^[ \t]*//')
 card=$(lspci -k | grep -A 2 -E "(VGA|3D)")
 if [[ $(echo $card | grep -i 'nvidia') != "" ]]
-	then nvidia=$(zenity --question --title="$title" --text "The Revenge Installer has detected that you are currently running an Nvidia graphics card.\nWould you like to install Proprietary Nvidia graphics drivers to the installed system?")
+	then zenity --question --title="$title" --height=40 --text "The Revenge Installer has detected that you are currently running an Nvidia graphics card.\nWould you like to install Proprietary Nvidia graphics drivers to the installed system?"
 		if [ "$?" = "0" ]
-			then video=$(zenity --list --height=400 --title="$title" --text "You will need to know what model of NVIDIA gaphics card you are using.\nFor NVIDIA 400 series and newer install nvidia and nvidia-libgl.\nFor 8000-9000 or 100-300 series install nvidia-304xx and nvidia-304xx-libgl.\n\nYour current graphics card is:\n$card\n\nSelect the NVIDIA drivers that you would like to install." --checklist --column "Select" --column "Driver" FALSE "nvidia nvidia-libgl nvidia-settings" FALSE "nvidia-304xx nvidia-304xx-libgl nvidia-settings")
+			then video=$(zenity --list --height=400 --title="$title" --text "You will need to know what model of NVIDIA graphics card you are using.\nFor NVIDIA 400 series and newer install nvidia and nvidia-libgl.\nFor 8000-9000 or 100-300 series install nvidia-304xx and nvidia-304xx-libgl.\n\nYour current graphics card is:\n$card\n\nSelect the NVIDIA drivers that you would like to install." --checklist --column "Select" --column "Driver" FALSE "nvidia nvidia-libgl nvidia-settings" FALSE "nvidia-304xx nvidia-304xx-libgl nvidia-settings")
 			else video="mesa xf86-video-nouveau"
 		fi
 	else video="mesa xf86-video-nouveau"
@@ -262,31 +260,35 @@ userpasswd2=$(zenity --entry --title="$title" --text "Please re-enter a password
 }
 
 cups() {
-print=$(zenity --question --title="$title" --radiolist --text "Would you like to install printer support?")
+zenity --question --title="$title" --height=40 --text "Would you like to install printer support?"
 cp="$?"
 }
 
 desktop() {
 # Choosing Desktop
-desktop=$(zenity --list --height=550 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "lxqt" FALSE "mate" FALSE "mate mate-extra" FALSE "budgie-desktop" FALSE "cinnamon" FALSE "deepin" FALSE "enlightenment" FALSE "jwm" FALSE "i3-wm i3lock i3status" FALSE "openbox tint2 openbox-themes")
+desktops=$(zenity --list --height=550 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "lxqt" FALSE "mate" FALSE "mate mate-extra" FALSE "budgie-desktop" FALSE "cinnamon" FALSE "deepin" FALSE "enlightenment" FALSE "jwm" FALSE "i3-wm i3lock i3status" FALSE "openbox tint2 openbox-themes" FALSE "mate mate-extra mate-revenge-desktop" FALSE "i3-revenge-desktop" FALSE "Look at more window managers")
+if [ "$desktops" = "Look at more window managers" ]
+then zenity --list --title="$title" --text="Look at these window managers. You will select the one you want in the next step" --column View --width=450 --height=550 "$(pacman -Ss window manager)"
+wm=$(zenity --list --radiolist --column Select --column WM --height=550 --width=450 --title="$title" --radiolist --text="What window manager would you like?" $(pacman -Ssq window manager | awk '{ printf " FALSE ""\0"$0"\0" }'))
+fi
 }
 
 displaymanager() {
-dm=$(zenity --list --title="$title" --radiolist --text "What display manager would you like to use?" --column "Select" --column "Displau Manager" FALSE "lightdm" FALSE "lxdm" FALSE "sddm" FALSE "gdm" FALSE "default")
+dm=$(zenity --list --title="$title" --radiolist --text "What display manager would you like to use?" --column "Select" --column "Display Manager" FALSE "lightdm" FALSE "lxdm" FALSE "sddm" FALSE "gdm" FALSE "default")
 }
 
 revengerepo() {
-repo=$(zenity --question --title="$title" --text "Would you like to add the revenge_repo to your /etc/pacman.conf? The revenge_repo contains a few extra packages, such as spotify and pamac.")
+zenity --question --title="$title" --height=40 --text="Would you like to add the revenge_repo to your /etc/pacman.conf?\n The revenge_repo contains a few extra packages, such as spotify and pamac."
 rr="$?"
 }
 
 pamacaur() {
-pamac=$(zenity --question --title="$title" --text "Would you like to install pamac, a GUI tool to install packages from the repo and the aur?")
+zenity --question --title="$title" --height=40 --text="Would you like to install pamac?\nPamac is a GUI tool to install packages from the repo and the aur"
 pa="$?"
 }
 
 archuserrepo() {
-aur=$(zenity --question --title="$title" --text "Would you like to install support for the Arch User Repository 'pacaur'?")
+zenity --question --title="$title" --text "Would you like to install support for the Arch User Repository 'pacaur'?"
 abs="$?"
 }
 
@@ -315,25 +317,28 @@ sed -i -e 's/[|]//g' utils.txt
 }
 
 # allowing user to select extra applications
+pacman -Syy
 libreoffice() {
-lo=$(zenity --question --title="$title" --text="Would you like to install libreoffice, an open source ms office alternative?")
+zenity --question --title="$title" --text="Would you like to install libreoffice, an open source ms office alternative?"
 lbr="$?"
-if [ "$?" = "0" ]
+if [ "$lbr" = "0" ]
 then lover=$(zenity --list --radiolist --text="Libreoffice-fresh is the newest up-to-date version of libreoffice, while still is less frequently updated" --column Select --column Version FALSE "fresh" FALSE "still")
-lolang=$(zenity --list --radiolist --column Select --column Langpack $(cat /lo$lover.txt | awk '{ printf " FALSE ""\0"$0"\0" }'))
+lolang=$(zenity --list --radiolist --column Select --column Langpack $(pacman -Ssq libreoffice-$lover lang | awk '{ printf " FALSE ""\0"$0"\0" }'))
 fi
 }
 
 firefox() {
-ff=$(zenity --question --title="$title" --text="Would you like to install Firefox, a browser by the Mozilla foundation?")
+zenity --question --title="$title" --text="Would you like to install Firefox, a browser by the Mozilla foundation?"
 frf="$?"
 if [ "$frf" = "0" ]
-then fflang=$(zenity --list --radiolist --column Select --column Langpack $(cat /ff.txt  | awk '{ printf " FALSE ""\0"$0"\0" }'))
+then fflang=$(zenity --list --radiolist --column Select --column Langpack $(pacman -Ssq firefox lang  | awk '{ printf " FALSE ""\0"$0"\0" }'))
 fi
 }
 
 installapps() {
-extra=$(zenity --list --height=300 --title="$title" --radiolist --text "If you would like to select more applications to install,\nChoose the category from the list below.\nWhen you are finished selecting applications\nin each category you will be returned to this menu.\nThen simply select 'finished' when you are finished." --column Select --column Category FALSE internet FALSE media FALSE office FALSE utilities FALSE finished)
+extra=$(zenity --list --height=300 --title="$title" --radiolist --text "If you would like to select more applications to install,\nChoose the category from the 
+list below.\nWhen you are finished selecting applications\nin each category you will be returned to this menu.\nThen simply select 'finished' when you are 
+finished." --column Select --column Category FALSE internet FALSE media FALSE office FALSE utilities FALSE finished)
 
 if [ "$extra" = "internet" ]
 	then internet_apps;installapps
@@ -344,6 +349,7 @@ elif [ "$extra" = "office" ]
 elif [ "$extra" = "utilities" ]
 	then utility_apps;installapps
 fi
+
 }
 
 # bootloader?
@@ -354,7 +360,7 @@ devices=` awk '{print "FALSE " $0}' devices.txt `
 
 grub=$(zenity --question --title="$title" --text "Would you like to install the bootloader?\nThe answer to this is usually yes,\nunless you are dual-booting and plan to have another system handle\nthe boot process.")
 grb="$?"
-if [ "$?" = "0" ]
+if [ "$grb" = "0" ]
 	then grub_device=$(zenity --list --title="$title" --text "Where do you want to install the bootloader?" --radiolist --column Select --column Device $devices)
 fi
 }
@@ -420,7 +426,7 @@ export LANG=${locale}
 
 #setting keymap
 mkdir -p /mnt/etc/X11/xorg.conf.d/
-echo -e 'Section "InputClass"\n	Identifier "system-keyboard"\n	MatchIsKeyboard "on"\n	Option "XkbLayout" "'$layout'"\n	Option "XkbModel" "'$model'"\n	Option "XkbVariant" ",'$variant'"\n	 Option "XkbOptions" "grp:alt_shift_toggle"\nEndSection' > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
+echo -e 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "'$layout'"\n\tOption "XkbModel" "'$model'"\n\tOption "XkbVariant" ",'$variant'"\n\tOption "XkbOptions" "grp:alt_shift_toggle"\nEndSection' > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
 
 #setting timezone
 echo "# Setting Timezone..."
@@ -440,7 +446,7 @@ echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
 # installing video and audio packages
 echo "# Installing Desktop, Sound, and Video Drivers..."
-pacstrap /mnt  mesa xf86-video-nouveau xf86-video-vesa xf86-video-voodoo xf86-video-dummy xf86-video-vmware xf86-video-ati xf86-video-fbdev xf86-video-intel xf86-video-openchrome xf86-video-sisusb xf86-video-amdgpu xorg-server xorg-apps xorg-xinit xorg-twm xterm alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs gvfs
+pacstrap /mnt  mesa xorg-server xorg-apps xorg-xinit xorg-twm xterm xorg-drivers alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs gvfs
 
 # virtualbox
 if [ "$vb" = "0" ]
@@ -460,8 +466,12 @@ if [ "$vb" = "0" ]
 	fi
 fi
 echo "25"
+
 # installing chosen desktop
-pacstrap /mnt $desktop
+if [ "$desktops" = "Look at more window managers" ]
+then pacstrap /mnt $wm
+else pacstrap /mnt $desktops
+fi
 
 # cups
 if [ "$cp" = "0" ]
@@ -575,7 +585,7 @@ fi
 umount -R /mnt
 echo "100"
 echo "# Installation Finished!"
-) | zenity --progress --percentage=0 --title="$title" --width=450 --no-cancel --pulsate
+) | zenity --progress --percentage=0 --title="$title" --width=450 --no-cancel
 fi
 }
 
@@ -589,7 +599,7 @@ fi
 
 
 # Setting variables
-title="Zen Installer Framework 0.90 $SYSTEM"
+title="Zen Installer Framework 1.00 $SYSTEM"
 
 # Adapted from AIS. An excellent bit of code!
 arch_chroot() {
