@@ -402,48 +402,6 @@ sed -i '/swapfile/d' /mnt/etc/fstab
 echo "/swapfile		none	swap	defaults	0	0" >> /mnt/etc/fstab
 fi
 
-#root password
-echo "# Setting root password..."
-touch .passwd
-echo -e "$rtpasswd\n$rtpasswd2" > .passwd
-arch_chroot "passwd root" < .passwd >/dev/null
-rm .passwd
-
-#adding user
-echo "# Making new user..."
-arch_chroot "useradd -m -g users -G adm,lp,wheel,power,audio,video -s /bin/bash $username"
-touch .passwd
-echo -e "$userpasswd\n$userpasswd2" > .passwd
-arch_chroot "passwd $username" < .passwd >/dev/null
-rm .passwd
-
-#setting locale
-echo "# Generating Locale..."
-echo "LANG=\"${locale}\"" > /mnt/etc/locale.conf
-echo "${locale} UTF-8" > /mnt/etc/locale.gen
-arch_chroot "locale-gen"
-export LANG=${locale}
-
-#setting keymap
-mkdir -p /mnt/etc/X11/xorg.conf.d/
-echo -e 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "'$layout'"\n\tOption "XkbModel" "'$model'"\n\tOption "XkbVariant" ",'$variant'"\n\tOption "XkbOptions" "grp:alt_shift_toggle"\nEndSection' > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
-
-#setting timezone
-echo "# Setting Timezone..."
-arch_chroot "rm /etc/localtime"
-arch_chroot "ln -s /usr/share/zoneinfo/${zone}/${subzone} /etc/localtime"
-
-#setting hw clock
-echo "# Setting System Clock..."
-arch_chroot "hwclock --systohc --$clock"
-
-#setting hostname
-echo "# Setting Hostname..."
-arch_chroot "echo $hname > /etc/hostname"
-
-# setting sudo permissions
-echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
-
 # installing video and audio packages
 echo "# Installing Desktop, Sound, and Video Drivers..."
 pacstrap /mnt  mesa xorg-server xorg-apps xorg-xinit xorg-twm xterm xorg-drivers alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome gksu ttf-dejavu gnome-keyring xdg-user-dirs gvfs
@@ -477,28 +435,6 @@ fi
 if [ "$cp" = "0" ]
 	then pacstrap /mnt ghostscript gsfonts system-config-printer gtk3-print-backends cups cups-pdf cups-filters
 arch_chroot "systemctl enable org.cups.cupsd.service"
-fi
-
-# starting desktop manager
-if [ "$dm"  = "default" ]
-then if [ "$desktop" = "gnome" ]
-	then arch_chroot "systemctl enable gdm.service"
-	elif [ "$desktop" = "gnome gnome-extra" ]
-	then arch_chroot "systemctl enable gdm.service"
-	elif [ "$desktop" = "budgie-desktop" ]
-	then pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter gnome-control-center gnome-backgrounds;arch_chroot "systemctl enable lightdm.service"
-	elif [ "$desktop" = "lxde" ]
-	then pacstrap /mnt lxdm-gtk3;arch_chroot "systemctl enable lxdm.service"
-	elif [ "$desktop" = "plasma" ]
-	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
-	elif [ "$desktop" = "plasma kde-applications" ]
-	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
-	else pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter
-	arch_chroot "systemctl enable lightdm.service"
-	fi
-elif [ "$dm" = "lightdm" ]
-then pacstrap /mnt lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings;arch_chroot "systemctl enable lightdm.service"
-else pacstrap /mnt $dm;arch_chroot "systemctl enable $dm.service"
 fi
 
 # enabling network manager
@@ -581,6 +517,70 @@ fi
 if [ "$frf" = "0" ]
 then arch_chroot "pacman -S --noconfirm firefox  $fflang"
 fi
+#root password
+echo "# Setting root password..."
+touch .passwd
+echo -e "$rtpasswd\n$rtpasswd2" > .passwd
+arch_chroot "passwd root" < .passwd >/dev/null
+rm .passwd
+
+#adding user
+echo "# Making new user..."
+arch_chroot "useradd -m -g users -G adm,lp,wheel,power,audio,video -s /bin/bash $username"
+touch .passwd
+echo -e "$userpasswd\n$userpasswd2" > .passwd
+arch_chroot "passwd $username" < .passwd >/dev/null
+rm .passwd
+
+#setting locale
+echo "# Generating Locale..."
+echo "LANG=\"${locale}\"" > /mnt/etc/locale.conf
+echo "${locale} UTF-8" > /mnt/etc/locale.gen
+arch_chroot "locale-gen"
+export LANG=${locale}
+
+#setting keymap
+mkdir -p /mnt/etc/X11/xorg.conf.d/
+echo -e 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "'$layout'"\n\tOption "XkbModel" "'$model'"\n\tOption "XkbVariant" ",'$variant'"\n\tOption "XkbOptions" "grp:alt_shift_toggle"\nEndSection' > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
+
+#setting timezone
+echo "# Setting Timezone..."
+arch_chroot "rm /etc/localtime"
+arch_chroot "ln -s /usr/share/zoneinfo/${zone}/${subzone} /etc/localtime"
+
+#setting hw clock
+echo "# Setting System Clock..."
+arch_chroot "hwclock --systohc --$clock"
+
+#setting hostname
+echo "# Setting Hostname..."
+arch_chroot "echo $hname > /etc/hostname"
+
+# setting sudo permissions
+echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
+
+# starting desktop manager
+if [ "$dm"  = "default" ]
+then if [ "$desktop" = "gnome" ]
+	then arch_chroot "systemctl enable gdm.service"
+	elif [ "$desktop" = "gnome gnome-extra" ]
+	then arch_chroot "systemctl enable gdm.service"
+	elif [ "$desktop" = "budgie-desktop" ]
+	then pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter gnome-control-center gnome-backgrounds;arch_chroot "systemctl enable lightdm.service"
+	elif [ "$desktop" = "lxde" ]
+	then pacstrap /mnt lxdm-gtk3;arch_chroot "systemctl enable lxdm.service"
+	elif [ "$desktop" = "plasma" ]
+	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
+	elif [ "$desktop" = "plasma kde-applications" ]
+	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
+	else pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter
+	arch_chroot "systemctl enable lightdm.service"
+	fi
+elif [ "$dm" = "lightdm" ]
+then pacstrap /mnt lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings;arch_chroot "systemctl enable lightdm.service"
+else pacstrap /mnt $dm;arch_chroot "systemctl enable $dm.service"
+fi
+
 # unmounting partitions
 umount -R /mnt
 echo "100"
