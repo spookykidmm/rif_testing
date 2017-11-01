@@ -266,7 +266,7 @@ cp="$?"
 
 desktop() {
 # Choosing Desktop
-desktops=$(zenity --list --height=500 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "lxqt" FALSE "mate" FALSE "mate mate-extra" FALSE "budgie-desktop" FALSE "cinnamon" FALSE "deepin" FALSE "enlightenment" FALSE "jwm" FALSE "i3-wm i3lock i3status" FALSE "openbox tint2 openbox-themes" FALSE "mate mate-extra mate-revenge-desktop" FALSE "i3-revenge-desktop" FALSE "Look at more window managers")
+desktops=$(zenity --list --height=500 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "lxqt" FALSE "mate" FALSE "mate mate-extra" FALSE "budgie-desktop" FALSE "cinnamon" FALSE "deepin" FALSE "enlightenment" FALSE "jwm" FALSE "i3-wm i3lock i3status" FALSE "openbox tint2 openbox-themes" FALSE "mate mate-extra mate-revenge-desktop" FALSE "i3-revenge-desktop" FALSE "Look at more window managers" FALSE "gnome gnome-extra gnome-revenge-desktop" FALSE "plasma kde-applications plasma-revenge-desktop" FALSE "xfce4 xfce4-goodies xfce-revenge-desktop")
 if [ "$desktops" = "Look at more window managers" ]
 then zenity --list --title="$title" --text="Look at these window managers. You will select the one you want in the next step" --column View --width=450 --height=550 "$(pacman -Ss window manager)"
 wm=$(zenity --list --radiolist --height=500 --width=450 --column Select --column WM --title="$title" --radiolist --text="What window manager would you like?" $(pacman -Ssq window manager | awk '{ printf " FALSE ""\0"$0"\0" }'))
@@ -461,11 +461,6 @@ if [ "$abs" = "0" ]
 
 fi
 echo "75"
-# selecting shell
-if [ "$shell" = "zsh" ]
-then arch_chroot "sudo pacman -S --noconfirm zsh zsh-syntax-highlighting zsh-completions grml-zsh-config;chsh -s /usr/bin/zsh $username"
-else arch_chroot "sudo pacman -S --noconfirm $shell;chsh -s /usr/bin/$shell"
-fi
 
 # installing bootloader
 if [ "$grb" = "0" ]
@@ -559,19 +554,21 @@ arch_chroot "echo $hname > /etc/hostname"
 # setting sudo permissions
 echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
+# selecting shell
+if [ "$shell" = "zsh" ]
+then arch_chroot "sudo pacman -S --noconfirm zsh zsh-syntax-highlighting zsh-completions grml-zsh-config;chsh -s /usr/bin/zsh $username"
+else arch_chroot "sudo pacman -S --noconfirm $shell;chsh -s /usr/bin/$shell"
+fi
+
 # starting desktop manager
 if [ "$dm"  = "default" ]
-then if [ "$desktop" = "gnome" ]
-	then arch_chroot "systemctl enable gdm.service"
-	elif [ "$desktop" = "gnome gnome-extra" ]
+then if [ "$desktop" == "gnome" ]
 	then arch_chroot "systemctl enable gdm.service"
 	elif [ "$desktop" = "budgie-desktop" ]
 	then pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter gnome-control-center gnome-backgrounds;arch_chroot "systemctl enable lightdm.service"
 	elif [ "$desktop" = "lxde" ]
 	then pacstrap /mnt lxdm-gtk3;arch_chroot "systemctl enable lxdm.service"
-	elif [ "$desktop" = "plasma" ]
-	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
-	elif [ "$desktop" = "plasma kde-applications" ]
+	elif [ "$desktop" == "plasma" ]
 	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
 	else pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter
 	arch_chroot "systemctl enable lightdm.service"
