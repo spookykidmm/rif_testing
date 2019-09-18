@@ -336,10 +336,14 @@ sed -i -e 's/[|]//g' off2.txt
 
 # utility app list
 utility_apps() {
-zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Utility Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "redshift " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "btrfs-progs " FALSE "gptfdisk " > utils.txt
+zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Utility Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "partitionmanager " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "redshift " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "btrfs-progs " FALSE "gptfdisk " FALSE "cfdisk "> utils.txt
 sed -i -e 's/[|]//g' utils.txt
 }
 
+customization_apps() {
+	zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Customization Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "breeze-gtk " FALSE "materia-gtk-theme " FALSE "deepin-gtk-theme " FALSE "arc-gtk-theme " FALSE "adapta-gtk-theme " FALSE "elementary-icon-theme " FALSE "arc-icon-theme " FALSE "papirus-icon-theme " FALSE "qt5ct " FALSE "lxappearance-gtk3 " FALSE "qt5ct "
+sed -i -e 's/[|]//g' cust.txt
+}
 # allowing user to select extra applications
 rank=$(curl -s "https://www.archlinux.org/mirrorlist/?country="$country"&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 10 -)
 echo -e "$rank" >> /etc/pacman.d/mirrorlist
@@ -364,7 +368,7 @@ fi
 installapps() {
 extra=$(zenity --list --height=500 --width=450 --title="$title" --radiolist --text "If you would like to select more applications to install,\nChoose the category from the 
 list below.\nWhen you are finished selecting applications\nin each category you will be returned to this menu.\nThen simply select 'finished' when you are 
-finished." --column Select --column Category FALSE internet FALSE media FALSE office FALSE utilities FALSE finished)
+finished." --column Select --column Category FALSE internet FALSE media FALSE office FALSE utilities FALSE FALSE customization finished)
 
 if [ "$extra" = "internet" ]
 	then internet_apps;installapps
@@ -374,6 +378,8 @@ elif [ "$extra" = "office" ]
 	then office_apps;installapps
 elif [ "$extra" = "utilities" ]
 	then utility_apps;installapps
+elif [ "$extra" = "utilities" ]
+then customization_apps;installapps
 fi
 
 }
@@ -551,11 +557,12 @@ int=` cat int2.txt `
 med=` cat med2.txt `
 off=` cat off2.txt `
 utils=` cat utils.txt `
+cust= ` cat cust.txt `
 
 
 # Installing Selecting Applications
 arch_chroot "pacman -Syy"
-arch_chroot "pacman -S --noconfirm $int $med $off $utils"
+arch_chroot "pacman -S --noconfirm $int $med $off $utils $cust"
 if [ "$lbr" = "0" ]
 then arch_chroot "pacman -S --noconfirm libreoffice-$lover $lolang"
 fi
