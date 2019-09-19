@@ -341,7 +341,7 @@ sed -i -e 's/[|]//g' utils.txt
 }
 
 customization_apps() {
-	zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Customization Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "breeze-gtk " FALSE "materia-gtk-theme " FALSE "deepin-gtk-theme " FALSE "arc-gtk-theme " FALSE "adapta-gtk-theme " FALSE "elementary-icon-theme " FALSE "arc-icon-theme " FALSE "papirus-icon-theme " FALSE "qt5ct " FALSE "lxappearance-gtk3 " FALSE "qt5ct "
+	zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Customization Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "breeze-gtk " FALSE "materia-gtk-theme " FALSE "deepin-gtk-theme " FALSE "arc-gtk-theme " FALSE "adapta-gtk-theme " FALSE "elementary-icon-theme " FALSE "arc-icon-theme " FALSE "papirus-icon-theme " FALSE "qt5ct " FALSE "lxappearance-gtk3 " > cust.txt
 sed -i -e 's/[|]//g' cust.txt
 }
 # allowing user to select extra applications
