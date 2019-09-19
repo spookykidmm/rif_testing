@@ -368,7 +368,7 @@ fi
 installapps() {
 extra=$(zenity --list --height=500 --width=450 --title="$title" --radiolist --text "If you would like to select more applications to install,\nChoose the category from the 
 list below.\nWhen you are finished selecting applications\nin each category you will be returned to this menu.\nThen simply select 'finished' when you are 
-finished." --column Select --column Category FALSE internet FALSE media FALSE office FALSE utilities FALSE FALSE customization finished)
+finished." --column Select --column Category FALSE internet FALSE media FALSE office FALSE utilities FALSE customization finished)
 
 if [ "$extra" = "internet" ]
 	then internet_apps;installapps
