@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Zen Installer Framework version 1.30
+# Zen Installer Framework version 2.00
 #
 # Written by Jody James
 #
@@ -296,7 +296,7 @@ rr="$?"
 }
 
 multilib() {
-zenity --question --height=500 --width=450 --text="Would you like to enable multilib repositories on your system? You may need these if you use Steam, Wine, or other 32-bit software?"
+zenity --question --height=500 --width=450 --title="$title" --text="Would you like to enable multilib repositories on your system? You may need these if you use Steam, Wine, or other 32-bit software?"
 multilib="$?"
 }
 
@@ -368,7 +368,7 @@ fi
 installapps() {
 extra=$(zenity --list --height=500 --width=450 --title="$title" --radiolist --text "If you would like to select more applications to install,\nChoose the category from the 
 list below.\nWhen you are finished selecting applications\nin each category you will be returned to this menu.\nThen simply select 'finished' when you are 
-finished." --column Select --column Category FALSE internet FALSE media FALSE office FALSE utilities FALSE customization finished)
+finished." --column Select --column Category FALSE internet FALSE media FALSE office FALSE utilities FALSE customization FALSE finished)
 
 if [ "$extra" = "internet" ]
 	then internet_apps;installapps
@@ -662,7 +662,7 @@ fi
 
 
 # Setting variables
-title="Zen Installer Framework 1.30 $SYSTEM"
+title="Zen Installer Framework 2.00 $SYSTEM"
 
 # Adapted from AIS. An excellent bit of code!
 arch_chroot() {
