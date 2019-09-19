@@ -378,7 +378,7 @@ elif [ "$extra" = "office" ]
 	then office_apps;installapps
 elif [ "$extra" = "utilities" ]
 	then utility_apps;installapps
-elif [ "$extra" = "utilities" ]
+elif [ "$extra" = "customization" ]
 then customization_apps;installapps
 fi
 
