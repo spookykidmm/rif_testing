@@ -336,7 +336,7 @@ sed -i -e 's/[|]//g' off2.txt
 
 # utility app list
 utility_apps() {
-zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Utility Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "partitionmanager " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "redshift " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "btrfs-progs " FALSE "gptfdisk " > utils.txt
+zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Utility Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "partitionmanager " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "redshift " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "btrfs-progs " FALSE "gptfdisk " FALSE "f2fs-tools " FALSE "exfat-utils " FALSE "wireguard-tools " FALSE "wireguard-dkms " FALSE "openvpn " FALSE "network-manager-applet " > utils.txt
 sed -i -e 's/[|]//g' utils.txt
 }
 
