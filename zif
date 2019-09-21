@@ -279,7 +279,7 @@ cp="$?"
 
 desktop() {
 # Choosing Desktop
-desktops=$(zenity --list --height=500 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "lxqt" FALSE "mate" FALSE "mate mate-extra" FALSE "budgie-desktop" FALSE "cinnamon" FALSE "deepin" FALSE "deepin deepin-extra" FALSE "enlightenment" FALSE "jwm" FALSE "i3-wm i3lock i3status" FALSE "i3-gaps i3status i3lock" FALSE "openbox tint2 openbox-themes" FALSE "Look at more window managers")
+desktops=$(zenity --list --height=500 --width=450 --title="$title" --radiolist --text "What desktop would you like to install?" --column Select --column Desktop FALSE "gnome" FALSE "gnome gnome-extra" FALSE "plasma" FALSE "plasma kde-applications" FALSE "xfce4" FALSE "xfce4 xfce4-goodies" FALSE "lxde" FALSE "lxqt" FALSE "mate" FALSE "mate mate-extra" FALSE "budgie-desktop" FALSE "budgie-desktop gnome" FALSE "cinnamon" FALSE "deepin" FALSE "deepin deepin-extra" FALSE "enlightenment" FALSE "jwm" FALSE "i3-wm i3lock i3status" FALSE "i3-gaps i3status i3lock" FALSE "openbox tint2" FALSE "Look at more window managers")
 if [ "$desktops" = "Look at more window managers" ]
 then zenity --list --title="$title" --text="Look at these window managers. You will select the one you want in the next step" --column View --width=450 --height=550 "$(pacman -Ss window manager)"
 wm=$(zenity --list --radiolist --height=500 --width=450 --column Select --column WM --title="$title" --radiolist --text="What window manager would you like?" $(pacman -Ssq window manager | awk '{ printf " FALSE ""\0"$0"\0" }'))
@@ -336,7 +336,7 @@ sed -i -e 's/[|]//g' off2.txt
 
 # utility app list
 utility_apps() {
-zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Utility Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "partitionmanager " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "redshift " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "btrfs-progs " FALSE "gptfdisk " FALSE "cfdisk "> utils.txt
+zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Utility Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "partitionmanager " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "redshift " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "btrfs-progs " FALSE "gptfdisk " > utils.txt
 sed -i -e 's/[|]//g' utils.txt
 }
 
