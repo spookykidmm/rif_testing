@@ -15,10 +15,10 @@
 # Special Recognition to 'angeltoast' as some code was adapted from the Feliz Installer
 #
 #
+
 #Pulling dependencies
 sudo pacman -Syy
 sudo pacman -S --noconfirm arch-install-scripts archiso pacman-contrib zenity gparted
-
 # Selecting the Drive
 man_partition() {
 list=` lsblk -lno NAME,TYPE,SIZE,MOUNTPOINT | grep "disk" `
@@ -190,7 +190,7 @@ if [ "$vary" = "0" ]
 then variant=$(zenity --list --radiolist --height=500 --width=450 --title="$title" --text="Select your preferred variant" --column Select --column Variant $(localectl list-x11-keymap-variants | awk '{ printf " FALSE ""\0"$0"\0" }'))
 fi
 
-zenity --question --height=500 --width=450 --title="$title" --text="Do you see your keymap in any of the options above?"
+zenity --question --height=500 --width=450 --title="$title" --text="Do you see your keymap in any of the previous options?"
 map="$?"
 
 if [ "$map" = "1" ]
@@ -227,8 +227,8 @@ username=$(zenity --entry --title="$title" --text "Please enter a username for t
 
 vbox() {
 graphics=$(lspci | grep -i "vga" | sed 's/.*://' | sed 's/(.*//' | sed 's/^[ \t]*//')
-if [[ $(echo $graphics | grep -i 'virtualbox') != "" ]]
-	then zenity --question --height=500 --width=450 --title="$title" --text "The Revenge Installer has detected that you are currently running in Virtualbox.\nWould you like to install Virtualbox Utilities to the installed system?"
+if [[ $(echo $graphics | grep -i 'VMware') != "" ]]
+	then zenity --question --height=500 --width=450 --title="$title" --text "The Zen Installer has detected that you are currently running in Virtualbox.\nWould you like to install Virtualbox Utilities to the installed system?"
 vb="$?"
 fi
 }
@@ -237,7 +237,7 @@ nvidia() {
 graphics=$(lspci | grep -i "vga" | sed 's/.*://' | sed 's/(.*//' | sed 's/^[ \t]*//')
 card=$(lspci -k | grep -A 2 -E "(VGA|3D)")
 if [[ $(echo $card | grep -i 'nvidia') != "" ]]
-	then zenity --question --height=500 --width=450 --title="$title" --text "The Revenge Installer has detected that you are currently running an Nvidia graphics card.\nWould you like to install Proprietary Nvidia graphics drivers to the installed system?"
+	then zenity --question --height=500 --width=450 --title="$title" --text "The Zen Installer has detected that you are currently running an Nvidia graphics card.\nWould you like to install Proprietary Nvidia graphics drivers to the installed system?"
 		if [ "$?" = "0" ]
 			then video=$(zenity --list  --checklist --height=500 --width=450 --title="$title" --text "You will need to know what model of NVIDIA graphics card you are using.\nFor NVIDIA 400 series and newer install nvidia and nvidia-libgl.\nFor 8000-9000 or 100-300 series install nvidia-304xx and nvidia-304xx-libgl.\n\nYour current graphics card is:\n$card\n\nSelect the NVIDIA drivers that you would like to install." --column "Select" --column "Driver" FALSE "nvidia nvidia-utils nvidia-settings" FALSE "nvidia-304xx nvidia-304xx-utils nvidia-settings" FALSE "nvidia-340xx nvidia-340xx-utils nvidia-settings" FALSE "nvidia-lts nvidia-settings nvidia-utils" FALSE "nvidia-340xx-lts nvidia-340xx-utils nvidia-settings" FALSE "nvidia-304xx-lts nvidia-304xx-utils nvidia-settings" FALSE "nvidia-dkms" FALSE "nvidia-340xx-dkms" FALSE "nvidia-304xx-dkms")
 			else video="mesa xf86-video-nouveau"
@@ -287,11 +287,11 @@ fi
 }
 
 displaymanager() {
-dm=$(zenity --list --title="$title" --radiolist  --height=500 --width=450 --text "What display manager would you like to use?" --column "Select" --column "Display Manager" FALSE "lightdm" FALSE "lxdm" FALSE "sddm" FALSE "gdm" FALSE "default")
+dm=$(zenity --list --title="$title" --radiolist  --height=500 --width=450 --text "What display manager would you like to use?" --column "Select" --column "Display Manager" FALSE "lxdm" FALSE "sddm" FALSE "gdm" FALSE "default")
 }
 
 revengerepo() {
-zenity --question --title="$title"  --height=500 --width=450 --text="Would you like to add the revenge_repo to your /etc/pacman.conf?\n The revenge_repo contains a few extra packages, such as spotify and pamac."
+zenity --question --title="$title"  --height=500 --width=450 --text="Would you like to add spookyrepo to your /etc/pacman.conf?\n spookyrepo contains a few extra packages, such as spotify and pamac."
 rr="$?"
 }
 
@@ -336,7 +336,7 @@ sed -i -e 's/[|]//g' off2.txt
 
 # utility app list
 utility_apps() {
-zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Utility Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "partitionmanager " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "redshift " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "btrfs-progs " FALSE "gptfdisk " FALSE "f2fs-tools " FALSE "exfat-utils " FALSE "wireguard-tools " FALSE "wireguard-dkms " FALSE "openvpn " FALSE "network-manager-applet " > utils.txt
+zenity --list --checklist --height=500 --width=450 --title="$title" --text "Select the Utility Applications that You Would Like to Install" --column "Select" --column "Applications" FALSE "htop " FALSE "terminator " FALSE "gnome-disk-utility " FALSE "gparted " FALSE "partitionmanager " FALSE "synapse " FALSE "virtualbox " FALSE "gufw " FALSE "redshift " FALSE "leafpad " FALSE "geany " FALSE "parcellite " FALSE "grsync " FALSE "guake " FALSE "ntfs-3g " FALSE "btrfs-progs " FALSE "gptfdisk " FALSE "f2fs-tools " FALSE "exfat-utils "  FALSE "xfsprogs " FALSE "wireguard-tools " FALSE "wireguard-dkms " FALSE "openvpn " FALSE "network-manager-applet " > utils.txt
 sed -i -e 's/[|]//g' utils.txt
 }
 
@@ -345,9 +345,10 @@ customization_apps() {
 sed -i -e 's/[|]//g' cust.txt
 }
 # allowing user to select extra applications
-rank=$(curl -s "https://www.archlinux.org/mirrorlist/?country="$country"&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 10 -)
-echo -e "$rank" >> /etc/pacman.d/mirrorlist
-pacman -Syy
+update() {
+	pacman -Syy
+}
+
 libreoffice() {
 zenity --question --height=500 --width=450 --title="$title" --text="Would you like to install libreoffice, an open source ms office alternative?"
 lbr="$?"
@@ -409,8 +410,8 @@ else (
 # sorting pacman mirrors
 echo "# Sorting fastest pacman mirrors..."
 rank=$(curl -s "https://www.archlinux.org/mirrorlist/?country="$country"&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 10 -)
-echo -e "$rank" >> /etc/pacman.d/mirrorlist
-
+echo -e "$rank" > /etc/pacman.d/mirrorlist
+echo -e "$rank" > mirrors.txt
 # updating pacman cache
 echo "# Updating Pacman Cache..."
 pacman -Syy
@@ -418,14 +419,15 @@ arch_chroot "pacman -Syy"
 
 #installing base
 echo "# Installing Base..."
+pacstrap /mnt base bash nano vim-minimal vi linux-firmware cryptsetup e2fsprogs findutils gawk inetutils iproute2 jfsutils licenses linux-firmware logrotate lvm2 man-db man-pages mdadm pciutils procps-ng reiserfsprogs sysfsutils xfsprogs usbutils dosfstools mtools
 if [ "$kernel" = "linux" ]
-	then pacstrap /mnt base base-devel
+	then pacstrap /mnt base base-devel linux
 elif [ "$kernel" = "linux-lts" ]
-	then pacstrap /mnt $(pacman -Sqg base | sed 's/^\(linux\)$/\1-lts/') base-devel
+	then pacstrap /mnt base linux-lts base-devel
 elif [ "$kernel" = "linux-hardened" ]
-	then pacstrap /mnt $(pacman -Sqg base | sed 's/^\(linux\)$/\1-hardened/') base-devel
+	then pacstrap /mnt base linux-hardened base-devel
 elif [ "$kernel" = "linux-zen" ]
-	then pacstrap /mnt $(pacman -Sqg base | sed 's/^\(linux\)$/\1-zen/') base-devel
+	then pacstrap /mnt base linux-zen base-devel
 
 fi
 
@@ -439,13 +441,13 @@ fi
 echo "10"
 # installing video and audio packages
 echo "# Installing Desktop, Sound, and Video Drivers..."
-pacstrap /mnt  mesa xorg-server xorg-apps xorg-xinit xorg-twm xterm xorg-drivers alsa-utils pulseaudio pulseaudio-alsa xf86-input-synaptics xf86-input-keyboard xf86-input-mouse xf86-input-libinput intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome ttf-dejavu gnome-keyring xdg-user-dirs gvfs
+pacstrap /mnt mesa xorg xorg-server xorg-apps xorg-xinit xorg-twm xterm xorg-drivers alsa-utils pulseaudio pulseaudio-alsa intel-ucode b43-fwcutter networkmanager nm-connection-editor network-manager-applet polkit-gnome ttf-dejavu gnome-keyring xdg-user-dirs gvfs
 echo "20"
 # virtualbox
 if [ "$vb" = "0" ]
 	then
 	if [ "$kernel" = "linux" ]
-		then pacstrap /mnt virtualbox-guest-modules-arch virtualbox-guest-utils
+		then pacstrap /mnt virtualbox-guest-utils
         	echo -e "vboxguest\nvboxsf\nvboxvideo" > /mnt/etc/modules-load.d/virtualbox.conf
 	elif [ "$kernel" = "linux-lts" ]
 		then pacstrap /mnt virtualbox-guest-dkms virtualbox-guest-utils linux-lts-headers
@@ -475,16 +477,16 @@ fi
 # enabling network manager
 arch_chroot "systemctl enable NetworkManager"
 echo "50"
-# adding revenge_repo
-if [ "$rr" = "0"  ]
+# adding spookyrepo
+if [ "$rr" = "0" ]
 then 
-echo -e "\n[revenge_repo]" >> /mnt/etc/pacman.conf;echo "SigLevel = Optional TrustAll" >> /mnt/etc/pacman.conf;echo "Server = https://gitlab.com/spookykidmm/revenge_repo/raw/master/x86_64" >> /mnt/etc/pacman.conf;echo -e "Server = https://downloads.sourceforge.net/project/revenge-repo/revenge_repo/x86_64\n" >> /mnt/etc/pacman.conf
+echo -e "\n[spookyrepo]" >> /mnt/etc/pacman.conf;echo "SigLevel = Optional TrustAll" >> /mnt/etc/pacman.conf;echo "Server = https://github.com/spookykidmm/spookyrepo/raw/master/x86_64" >> /mnt/etc/pacman.conf;echo -e "Server = https://downloads.sourceforge.net/project/spookyrepo/x86_64\n" >> /mnt/etc/pacman.conf
 arch_chroot "pacman -Syy"
 fi
 
 # installing pamac-aur
 if [ "$pm" = "0" ]
-then echo -e "\t[spooky_aur]" >> /mnt/etc/pacman.conf;echo "SigLevel = Optional TrustAll" >> /mnt/etc/pacman.conf;echo -e "Server = https://raw.github.com/spookykidmm/spooky_aur/master/x86_64\n" >> /mnt/etc/pacman.conf
+then echo -e "\n[spooky_aur]" >> /mnt/etc/pacman.conf;echo "SigLevel = Optional TrustAll" >> /mnt/etc/pacman.conf;echo -e "Server = https://raw.github.com/spookykidmm/spooky_aur/master/x86_64\n" >> /mnt/etc/pacman.conf
 sudo pacman -Syy 
 arch_chroot "pacman -Syy"
 arch_chroot "pacman -S --noconfirm $pack"
@@ -561,6 +563,7 @@ cust=` cat cust.txt `
 
 
 # Installing Selecting Applications
+cp mirrors.txt /mnt/etc/pacman.d/mirrorlist
 arch_chroot "pacman -Syy"
 arch_chroot "pacman -S --noconfirm $int $med $off $utils $cust"
 if [ "$lbr" = "0" ]
@@ -631,16 +634,16 @@ if [ "$dm"  = "default" ]
 then if [ "$desktop" == "gnome" ]
 	then arch_chroot "systemctl enable gdm.service"
 	elif [ "$desktop" = "budgie-desktop" ]
-	then pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter gnome-control-center gnome-backgrounds;arch_chroot "systemctl enable lightdm.service"
+	then pacstrap /mnt lxdm-gtk3 gnome-control-center gnome-backgrounds;arch_chroot "systemctl enable lxdm.service"
 	elif [ "$desktop" = "lxde" ]
 	then pacstrap /mnt lxdm-gtk3;arch_chroot "systemctl enable lxdm.service"
 	elif [ "$desktop" == "plasma" ]
 	then pacstrap /mnt sddm;arch_chroot "systemctl enable sddm.service"
-	else pacstrap /mnt lightdm lightdm-gtk-greeter-settings lightdm-gtk-greeter
-	arch_chroot "systemctl enable lightdm.service"
+	else pacstrap /mnt lxdm-gtk3
+	arch_chroot "systemctl enable lxdm.service"
 	fi
 elif [ "$dm" = "lightdm" ]
-then pacstrap /mnt lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings;arch_chroot "systemctl enable lightdm.service"
+then pacstrap /mnt lightdm lightdm-slick-greeter lightdm-settings accountsservice;arch_chroot "systemctl enable lightdm.service;echo -e '\n[LightDM]\nlogind-check-graphical=true >> /etc/lightdm.conf'"
 else pacstrap /mnt $dm;arch_chroot "systemctl enable $dm.service"
 fi
 
@@ -695,6 +698,7 @@ archuserrepo
 cups
 displaymanager
 desktop
+update
 firefox
 libreoffice
 installapps
