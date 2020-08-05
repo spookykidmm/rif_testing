@@ -16,9 +16,7 @@
 #
 #
 
-#Pulling dependencies
-sudo pacman -Syy
-sudo pacman -S --noconfirm arch-install-scripts archiso pacman-contrib zenity gparted
+}
 # Selecting the Drive
 man_partition() {
 list=` lsblk -lno NAME,TYPE,SIZE,MOUNTPOINT | grep "disk" `
@@ -676,13 +674,14 @@ arch_chroot() {
 Parted() {
 	parted --script $dev "$1"
 }
-# Greeting the user
+# Greeting the user and pulling dependencies
+greeting() {
+sudo pacman -Syy
+sudo pacman -S --noconfirm arch-install-scripts pacman-contrib zenity gparted
 zenity --question --height=50--title="$title" --text "Welcome to the Zen Arch Installer.\n\nNext you will be prompted with a series of questions that will\nguide you through installing Arch Linux.\nYou will be asked if you want to use manual or auto partitioning.\nIf you select auto partitioning the drive that you select will be completely deleted\nand Arch will be installed. If you select manual, you will have the opportunity to partition the disk yourself\nand select which partitons to use for installation.\nClick 'yes' to begin or 'no' to exit."
-
 if [ "$?" = "1" ]
 	then exit
-fi
-
+	else 
 partition
 configure
 root_password
@@ -704,3 +703,6 @@ libreoffice
 installapps
 bootloader
 installing
+fi
+}
+greeting
