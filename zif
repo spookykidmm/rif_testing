@@ -16,12 +16,11 @@
 #
 #
 
-}
 # Selecting the Drive
 man_partition() {
 list=` lsblk -lno NAME,TYPE,SIZE,MOUNTPOINT | grep "disk" `
 
-zenity --info --height=500 width=450 --title="$title" --text "Below is a list of the available drives on your system:\n\n$list" 
+zenity --info --height=500 --width=450 --title="$title" --text "Below is a list of the available drives on your system:\n\n$list" 
 
 lsblk -lno NAME,TYPE | grep 'disk' | awk '{print "/dev/" $1 " " $2}' | sort -u > devices.txt
 sed -i 's/\<disk\>//g' devices.txt
@@ -406,7 +405,8 @@ if [ "$?" = "1" ]
 	then exit
 else (
 # sorting pacman mirrors
-echo "# Sorting fastest pacman mirrors..."
+xdg-open "https://github.com/spookykidmm/zen_installer"
+cho "# Sorting fastest pacman mirrors..."
 rank=$(curl -s "https://www.archlinux.org/mirrorlist/?country="$country"&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 10 -)
 echo -e "$rank" > /etc/pacman.d/mirrorlist
 echo -e "$rank" > mirrors.txt
@@ -678,10 +678,10 @@ Parted() {
 greeting() {
 sudo pacman -Syy
 sudo pacman -S --noconfirm arch-install-scripts pacman-contrib zenity gparted
-zenity --question --height=50--title="$title" --text "Welcome to the Zen Arch Installer.\n\nNext you will be prompted with a series of questions that will\nguide you through installing Arch Linux.\nYou will be asked if you want to use manual or auto partitioning.\nIf you select auto partitioning the drive that you select will be completely deleted\nand Arch will be installed. If you select manual, you will have the opportunity to partition the disk yourself\nand select which partitons to use for installation.\nClick 'yes' to begin or 'no' to exit."
+zenity --question --height=500 --width=450 --title="$title" --text "Welcome to the Zen Arch Installer.\n\nNext you will be prompted with a series of questions that will\nguide you through installing Arch Linux.\nYou will be asked if you want to use manual or auto partitioning.\nIf you select auto partitioning the drive that you select will be completely deleted\nand Arch will be installed. If you select manual, you will have the opportunity to partition the disk yourself\nand select which partitons to use for installation.\nClick 'yes' to begin or 'no' to exit.\n\n\n The Zen Installer is an installer for Arch Linux. For more information, visit https://twitter.com/spookykidmm "
 if [ "$?" = "1" ]
 	then exit
-	else 
+else 
 partition
 configure
 root_password
